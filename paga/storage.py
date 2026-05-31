@@ -228,6 +228,25 @@ class EncryptedProfileStore:
                 (tenant_id,),
             ).fetchone()[0]
 
+    def count_audits_matching(self, field: str, value: object, *, tenant_id: str | None = None) -> int:
+        """Count encrypted audit payloads matching one top-level field."""
+
+        if not field or len(field) > 128:
+            raise ValueError("Audit match field must be bounded.")
+        with self._connect() as connection:
+            if tenant_id is None:
+                rows = connection.execute("SELECT encrypted_audit FROM evaluation_audits").fetchall()
+            else:
+                self._validate_tenant_id(tenant_id)
+                rows = connection.execute(
+                    "SELECT encrypted_audit FROM evaluation_audits WHERE tenant_id = ?",
+                    (tenant_id,),
+                ).fetchall()
+        try:
+            return sum(1 for (payload,) in rows if json.loads(self.cipher.decrypt(payload)).get(field) == value)
+        except (InvalidToken, json.JSONDecodeError, UnicodeDecodeError) as error:
+            raise ValueError("Stored encrypted audit data failed integrity verification.") from error
+
     def rotate_encryption(self) -> tuple[int, int]:
         """Re-encrypt all records with the primary key and return rotated counts."""
 

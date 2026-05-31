@@ -40,8 +40,8 @@ The repository demonstrates a credible production slice:
 - Docker smoke tests, OpenAPI contract checks, dependency audit, CodeQL, and a
   three-version Python CI matrix.
 
-The most important next step is product integration: wire real ASR confidence,
-child-speech benchmark cases, and human-review outcomes into the hosted harness.
+The most important next step is product integration: feed real ASR confidence,
+child-speech benchmark cases, and reviewer outcomes into the hosted harness.
 
 ## 90-Second VP Walkthrough
 
@@ -61,8 +61,8 @@ child-speech benchmark cases, and human-review outcomes into the hosted harness.
 | --- | --- | --- |
 | Tutor-decision grading | Deterministic pass, over-intervention, under-intervention, and review verdicts | Working reference implementation |
 | Policy governance | Versioned `PolicyPack`, bounded rules, round-trip tests, applied rule IDs | Strong foundation; requires Ello-approved policy packs |
-| Human oversight | `ESCALATE_REVIEW` verdict and LMS manual-grading mapping | Contract exists; review queue and feedback loop remain integration work |
-| Acoustic quality gate | `EnterprisePhonemeEvaluator` bypasses low-confidence ASR hypotheses | Library implementation exists; hosted API wiring remains |
+| Human oversight | `ESCALATE_REVIEW`, structured review-queue payload, and LMS manual-grading mapping | Hosted routing contract works; owned queue and reviewer feedback loop remain integration work |
+| Acoustic quality gate | `/v1/evaluations` bypasses low-confidence ASR hypotheses, persists encrypted bypass audits, and supports naive-versus-governed comparison mode | Working reference implementation; real ASR calibration remains |
 | Privacy-safe audits | Transcript omission by default, encrypted durable records, request correlation | Working reference implementation |
 | Learner memory | Pseudonymous encrypted profiles, deletion, retention, tenant isolation | Working reference implementation; Ello data-model alignment remains |
 | Operations | Health, readiness, structured privacy-bounded logs, maintenance CLI, Docker smoke | Strong reference deployment controls |
@@ -93,7 +93,7 @@ retention pruning, key rotation, integrity validation, and atomic online backup.
 
 The repository runs:
 
-- `79` automated tests;
+- `86` automated tests;
 - Python `3.10`, `3.11`, and `3.12` CI;
 - deterministic OpenAPI checks against pinned service dependencies;
 - Docker health, readiness, non-root, logging, and maintenance smoke checks;
@@ -103,12 +103,12 @@ The repository runs:
 
 ### P0: integrate the real tutor event stream
 
-- Send ASR hypotheses, timing, confidence scores, tutor action, locale, policy
-  version, and correlation IDs through one hosted evaluation contract.
-- Wire `EnterprisePhonemeEvaluator` into `/v1/evaluations`.
-- Persist acoustic-bypass events in the same auditable format as normal
-  decisions.
-- Connect `ESCALATE_REVIEW` to an owned review queue with reviewer outcomes.
+- Feed real ASR hypotheses, timing, confidence scores, tutor action, locale,
+  policy version, and correlation IDs into the hosted evaluation contract.
+- Calibrate acoustic thresholds against consented child-speech cases and
+  production audio conditions.
+- Connect the structured `ESCALATE_REVIEW` payload to an owned queue with
+  reviewer outcomes.
 
 ### P0: build the child-speech evaluation program
 

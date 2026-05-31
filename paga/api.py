@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from enum import Enum
 from hmac import compare_digest
 from time import perf_counter
+from typing import Annotated
 from uuid import uuid4
 
 try:
@@ -19,7 +20,13 @@ except ImportError as error:  # pragma: no cover - exercised in minimal installs
 
 from paga import __version__
 from paga.integrations import EvaluationService
-from paga.metrics import LearnerProfileAdapter, PatternCategory, PhonemeAwareOverInterventionMetric, PolicyPack
+from paga.metrics import (
+    EnterprisePhonemeEvaluator,
+    LearnerProfileAdapter,
+    PatternCategory,
+    PhonemeAwareOverInterventionMetric,
+    PolicyPack,
+)
 from paga.reporting import build_institutional_report
 from paga.storage import EncryptedProfileStore
 
@@ -145,6 +152,9 @@ class ServiceSettings:
     retention_days: int = 30
     max_request_bytes: int = 32_768
     log_requests: bool = True
+    min_acoustic_confidence: float = 0.72
+    min_phoneme_confidence: float = 0.5
+    max_low_confidence_phoneme_ratio: float = 0.3
 
     def __post_init__(self) -> None:
         if not self.api_key and not self.api_credentials:
@@ -157,6 +167,13 @@ class ServiceSettings:
             raise ValueError("PAGA_RETENTION_DAYS must be >= 1.")
         if self.max_request_bytes < 1:
             raise ValueError("PAGA_MAX_REQUEST_BYTES must be >= 1.")
+        for name, value in (
+            ("PAGA_MIN_ACOUSTIC_CONFIDENCE", self.min_acoustic_confidence),
+            ("PAGA_MIN_PHONEME_CONFIDENCE", self.min_phoneme_confidence),
+            ("PAGA_MAX_LOW_CONFIDENCE_PHONEME_RATIO", self.max_low_confidence_phoneme_ratio),
+        ):
+            if value < 0.0 or value > 1.0:
+                raise ValueError(f"{name} must be between 0.0 and 1.0.")
         keys = [credential.key for credential in self.credentials]
         if len(keys) != len(set(keys)):
             raise ValueError("Service API keys must be unique.")
@@ -193,6 +210,11 @@ class ServiceSettings:
             retention_days=int(os.getenv("PAGA_RETENTION_DAYS", "30")),
             max_request_bytes=int(os.getenv("PAGA_MAX_REQUEST_BYTES", "32768")),
             log_requests=_parse_bool_env("PAGA_LOG_REQUESTS", True),
+            min_acoustic_confidence=float(os.getenv("PAGA_MIN_ACOUSTIC_CONFIDENCE", "0.72")),
+            min_phoneme_confidence=float(os.getenv("PAGA_MIN_PHONEME_CONFIDENCE", "0.5")),
+            max_low_confidence_phoneme_ratio=float(
+                os.getenv("PAGA_MAX_LOW_CONFIDENCE_PHONEME_RATIO", "0.3")
+            ),
         )
 
 
@@ -205,6 +227,14 @@ class EvaluationRequest(StrictModel):
     attempt: str = Field(min_length=1, max_length=256)
     action: str = Field(min_length=1, max_length=64)
     evaluation_id: str | None = Field(default=None, max_length=128)
+
+
+class HostedEvaluationRequest(EvaluationRequest):
+    acoustic_confidence_scores: list[Annotated[float, Field(ge=0.0, le=1.0)]] | None = Field(
+        default=None,
+        max_length=256,
+    )
+    comparison_mode: bool = False
 
 
 class ProfileUpdateRequest(StrictModel):
@@ -249,6 +279,12 @@ def create_app(
         production_mode=True,
     )
     metric = PhonemeAwareOverInterventionMetric(policy_pack=policy_pack)
+    enterprise_metric = EnterprisePhonemeEvaluator(
+        policy_pack=policy_pack,
+        min_acoustic_confidence=settings.min_acoustic_confidence,
+        min_phoneme_confidence=settings.min_phoneme_confidence,
+        min_phoneme_ratio=1.0 - settings.max_low_confidence_phoneme_ratio,
+    )
     evaluation_service = EvaluationService(metric)
     app = FastAPI(title="paga-eval", version=__version__, docs_url=None, redoc_url=None)
     app.add_middleware(RequestBodyLimitMiddleware, max_request_bytes=settings.max_request_bytes)
@@ -336,11 +372,40 @@ def create_app(
 
     @app.post("/v1/evaluations")
     def evaluate(
-        payload: EvaluationRequest,
+        payload: HostedEvaluationRequest,
         request: Request,
         credential: APIKeyCredential = Depends(authorize(Permission.EVALUATE)),
     ) -> dict:
-        result = evaluation_service.evaluate_payload(payload.model_dump(exclude_none=True))
+        if payload.comparison_mode and payload.acoustic_confidence_scores is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="comparison_mode requires acoustic_confidence_scores.",
+            )
+        if payload.acoustic_confidence_scores is None:
+            result = evaluation_service.evaluate_payload(payload.model_dump(exclude_none=True))
+        else:
+            result = enterprise_metric.evaluate_live_turn(
+                target=payload.target,
+                attempt=payload.attempt,
+                agent_action=payload.action,
+                acoustic_confidence_scores=payload.acoustic_confidence_scores,
+                evaluation_id=payload.evaluation_id,
+                comparison_mode=payload.comparison_mode,
+            )
+        if result.get("review_required"):
+            review_queue = result.setdefault(
+                "review_queue",
+                {
+                    "review_required": True,
+                    "review_reason": "policy_uncertainty",
+                    "confidence": result.get("acoustic_confidence_mean"),
+                    "evaluation_id": result["audit_record"]["evaluation_id"],
+                    "policy_id": result["audit_record"]["policy_id"],
+                    "policy_version": result["audit_record"]["policy_version"],
+                    "created_at": result["audit_record"]["evaluated_at"],
+                },
+            )
+            result["audit_record"]["review_queue"] = review_queue
         persist_audit(result["audit_record"], credential, request)
         return result
 
@@ -432,6 +497,16 @@ def create_app(
         return {
             "stored_profiles": store.count(tenant_id=credential.tenant_id),
             "stored_audits": store.count_audits(tenant_id=credential.tenant_id),
+            "stored_acoustic_bypasses": store.count_audits_matching(
+                "event_type",
+                "acoustic_bypass",
+                tenant_id=credential.tenant_id,
+            ),
+            "stored_review_required": store.count_audits_matching(
+                "review_required",
+                True,
+                tenant_id=credential.tenant_id,
+            ),
         }
 
     return app

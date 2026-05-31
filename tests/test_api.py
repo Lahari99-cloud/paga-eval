@@ -50,6 +50,91 @@ def test_evaluation_requires_auth_and_omits_transcript_audit_text(tmp_path):
     assert stats.json()["stored_audits"] == 1
 
 
+def test_low_asr_confidence_routes_to_durable_human_review_queue(tmp_path):
+    client = TestClient(create_app(_settings(tmp_path)))
+    response = client.post(
+        "/v1/evaluations",
+        headers=_headers(),
+        json={
+            "evaluation_id": "acoustic-bypass-1",
+            "target": "rabbit",
+            "attempt": "wabbit",
+            "action": "correct",
+            "acoustic_confidence_scores": [0.51, 0.49, 0.52],
+            "comparison_mode": True,
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["verdict"] == "ESCALATE_REVIEW"
+    assert body["review_queue"]["review_required"] is True
+    assert body["review_queue"]["review_reason"] == "acoustic_uncertainty"
+    assert body["audit_record"]["event_type"] == "acoustic_bypass"
+    assert body["audit_record"]["reason"] == "low_asr_confidence"
+    assert body["audit_record"]["target"] == ""
+    assert body["audit_record"]["attempt"] == ""
+    assert body["comparison"]["naive_evaluator"]["verdict"] == "FAIL_OVER_INTERVENTION"
+    assert body["comparison"]["paga_eval"]["verdict"] == "ESCALATE_REVIEW"
+    stats = client.get("/v1/operations/stats", headers=_headers()).json()
+    assert stats["stored_audits"] == 1
+    assert stats["stored_acoustic_bypasses"] == 1
+    assert stats["stored_review_required"] == 1
+
+
+def test_low_confidence_phoneme_ratio_routes_to_review_even_when_mean_passes(tmp_path):
+    settings = _settings(tmp_path)
+    settings = ServiceSettings(
+        **{
+            **settings.__dict__,
+            "min_acoustic_confidence": 0.5,
+            "min_phoneme_confidence": 0.6,
+            "max_low_confidence_phoneme_ratio": 0.3,
+        }
+    )
+    client = TestClient(create_app(settings))
+    response = client.post(
+        "/v1/evaluations",
+        headers=_headers(),
+        json={
+            "target": "test",
+            "attempt": "test",
+            "action": "accept",
+            "acoustic_confidence_scores": [0.9, 0.9, 0.3, 0.3],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["verdict"] == "ESCALATE_REVIEW"
+    assert response.json()["low_confidence_phoneme_ratio"] == 0.5
+
+
+@pytest.mark.parametrize("scores", [[1.01], [-0.01]])
+def test_acoustic_confidence_scores_are_bounded(tmp_path, scores):
+    client = TestClient(create_app(_settings(tmp_path)))
+    response = client.post(
+        "/v1/evaluations",
+        headers=_headers(),
+        json={
+            "target": "rabbit",
+            "attempt": "wabbit",
+            "action": "accept",
+            "acoustic_confidence_scores": scores,
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_comparison_mode_requires_acoustic_scores(tmp_path):
+    client = TestClient(create_app(_settings(tmp_path)))
+    response = client.post(
+        "/v1/evaluations",
+        headers=_headers(),
+        json={"target": "rabbit", "attempt": "wabbit", "action": "accept", "comparison_mode": True},
+    )
+    assert response.status_code == 422
+
+
 def test_profiles_persist_across_app_restart_and_can_be_deleted(tmp_path):
     settings = _settings(tmp_path)
     payload = {"user_id": "student-123", "pattern": "word_substitution", "category": "decoding_error"}

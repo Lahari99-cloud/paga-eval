@@ -1,9 +1,39 @@
 {
   "components": {
     "schemas": {
-      "EvaluationRequest": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HostedEvaluationRequest": {
         "additionalProperties": false,
         "properties": {
+          "acoustic_confidence_scores": {
+            "anyOf": [
+              {
+                "items": {
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                "maxItems": 256,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acoustic Confidence Scores"
+          },
           "action": {
             "maxLength": 64,
             "minLength": 1,
@@ -15,6 +45,11 @@
             "minLength": 1,
             "title": "Attempt",
             "type": "string"
+          },
+          "comparison_mode": {
+            "default": false,
+            "title": "Comparison Mode",
+            "type": "boolean"
           },
           "evaluation_id": {
             "anyOf": [
@@ -40,20 +75,7 @@
           "attempt",
           "action"
         ],
-        "title": "EvaluationRequest",
-        "type": "object"
-      },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "title": "Detail",
-            "type": "array"
-          }
-        },
-        "title": "HTTPValidationError",
+        "title": "HostedEvaluationRequest",
         "type": "object"
       },
       "PatternCategory": {
@@ -309,7 +331,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EvaluationRequest"
+                "$ref": "#/components/schemas/HostedEvaluationRequest"
               }
             }
           },

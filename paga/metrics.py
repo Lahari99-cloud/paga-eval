@@ -536,7 +536,7 @@ class EnterprisePhonemeEvaluator:
         policy_pack: PolicyPack | None = None,
         min_acoustic_confidence: float = 0.72,
         min_phoneme_confidence: float = 0.5,
-        min_phoneme_ratio: float = 0.8,
+        min_phoneme_ratio: float = 0.7,
         phonetic_tolerance: int | None = None,
         error_threshold: int | None = None,
         rules: Iterable[DevelopmentalRule | tuple[str, str]] | None = None,
@@ -586,6 +586,7 @@ class EnterprisePhonemeEvaluator:
         acoustic_confidence_scores: list[float],
         *,
         evaluation_id: str | None = None,
+        comparison_mode: bool = False,
     ) -> dict:
         """
         Processes acoustic data trails. If global or local ASR signals fall
@@ -606,6 +607,12 @@ class EnterprisePhonemeEvaluator:
         Returns:
             Dictionary with evaluation results
         """
+        if any(score < 0.0 or score > 1.0 for score in acoustic_confidence_scores):
+            raise ValueError("acoustic confidence scores must be between 0.0 and 1.0")
+
+        evaluation_id = evaluation_id or str(uuid4())
+        evaluated_at = datetime.now(timezone.utc).isoformat()
+
         # Handle empty confidence scores
         if not acoustic_confidence_scores:
             mean_confidence = 0.0
@@ -616,6 +623,8 @@ class EnterprisePhonemeEvaluator:
             phonemes_above_threshold = sum(1 for score in acoustic_confidence_scores if score >= self.min_phoneme_confidence)
             phoneme_pass_ratio = phonemes_above_threshold / len(acoustic_confidence_scores)
 
+        low_confidence_phoneme_ratio = 1.0 - phoneme_pass_ratio
+
         # Multi-level acoustic validation
         mean_confidence_ok = mean_confidence >= self.min_acoustic_confidence
         phoneme_ratio_ok = phoneme_pass_ratio >= self.min_phoneme_ratio
@@ -623,21 +632,65 @@ class EnterprisePhonemeEvaluator:
         # CRITICAL ADAPTATION: If the signal fails acoustic validation, halt deterministic classification
         # and trigger an immediate ESCALATE_REVIEW state to avoid scoring penalties.
         if not (mean_confidence_ok and phoneme_ratio_ok):
+            review_queue = {
+                "review_required": True,
+                "review_reason": "acoustic_uncertainty",
+                "confidence": mean_confidence,
+                "evaluation_id": evaluation_id,
+                "policy_id": self.policy_pack.policy_id,
+                "policy_version": self.policy_pack.version,
+                "created_at": evaluated_at,
+            }
             bypass_event = {
-                "verdict": "ESCALATE_REVIEW",
-                "classification": "UNCERTAIN_REQUIRES_REVIEW",
+                "verdict": Verdict.ESCALATE_REVIEW.value,
+                "classification": PatternCategory.UNCERTAIN_REQUIRES_REVIEW.value,
                 "reason": f"Acoustic validation failed: mean_confidence={mean_confidence:.2f} (threshold={self.min_acoustic_confidence}), phoneme_ratio={phoneme_pass_ratio:.2f} (threshold={self.min_phoneme_ratio}). Signal contaminated by noise, audio cutoff, or unstable recognition.",
+                "review_required": True,
+                "review_queue": review_queue,
+                "acoustic_confidence_mean": mean_confidence,
+                "acoustic_confidence_passed": False,
                 "audit_record": {
+                    "evaluation_id": evaluation_id,
+                    "evaluated_at": evaluated_at,
+                    "event_type": "acoustic_bypass",
+                    "reason": "low_asr_confidence",
+                    "policy_id": self.policy_pack.policy_id,
+                    "policy_version": self.policy_pack.version,
+                    "target": "",
+                    "attempt": "",
+                    "agent_action": agent_action.strip().lower(),
+                    "classification": PatternCategory.UNCERTAIN_REQUIRES_REVIEW.value,
+                    "verdict": Verdict.ESCALATE_REVIEW.value,
+                    "applied_rule_ids": [],
+                    "raw_distance": None,
+                    "phonetic_distance": None,
+                    "review_required": True,
                     "action_taken": "BYPASS_METRIC",
                     "requires_human_verification": True,
                     "acoustic_confidence_mean": mean_confidence,
                     "acoustic_confidence_threshold": self.min_acoustic_confidence,
                     "phoneme_confidence_threshold": self.min_phoneme_confidence,
                     "phoneme_pass_ratio": phoneme_pass_ratio,
-                    "phoneme_ratio_threshold": self.min_phoneme_ratio
+                    "phoneme_ratio_threshold": self.min_phoneme_ratio,
+                    "low_confidence_phoneme_ratio": low_confidence_phoneme_ratio,
+                    "review_queue": review_queue,
                 },
-                "phoneme_pass_ratio": phoneme_pass_ratio
+                "phoneme_pass_ratio": phoneme_pass_ratio,
+                "low_confidence_phoneme_ratio": low_confidence_phoneme_ratio,
             }
+            if comparison_mode:
+                naive_result = self._core_metric.evaluate(
+                    target=target,
+                    attempt=attempt,
+                    agent_action=agent_action,
+                    evaluation_id=evaluation_id,
+                )
+                bypass_event["comparison"] = self._comparison_payload(
+                    naive_result=naive_result,
+                    governed_verdict=Verdict.ESCALATE_REVIEW.value,
+                    governed_classification=PatternCategory.UNCERTAIN_REQUIRES_REVIEW.value,
+                    reason="Low ASR confidence prevented automated judgment.",
+                )
 
             # Invoke callback for observability/metrics if provided
             if self.on_acoustic_bypass is not None:
@@ -675,7 +728,7 @@ class EnterprisePhonemeEvaluator:
         )
 
         # Return as dict for backward compatibility with existing usage
-        return {
+        payload = {
             "verdict": enhanced_result.verdict.value,
             "score": enhanced_result.score,
             "classification": enhanced_result.classification.value,
@@ -687,7 +740,47 @@ class EnterprisePhonemeEvaluator:
             "audit_record": enhanced_result.audit_record.to_dict() if enhanced_result.audit_record else None,
             "acoustic_confidence_mean": enhanced_result.acoustic_confidence_mean,
             "acoustic_confidence_passed": enhanced_result.acoustic_confidence_passed,
-            "phoneme_pass_ratio": phoneme_pass_ratio
+            "phoneme_pass_ratio": phoneme_pass_ratio,
+            "low_confidence_phoneme_ratio": low_confidence_phoneme_ratio,
+        }
+        payload["audit_record"].update(
+            {
+                "event_type": "policy_evaluation",
+                "acoustic_confidence_mean": mean_confidence,
+                "acoustic_confidence_threshold": self.min_acoustic_confidence,
+                "phoneme_confidence_threshold": self.min_phoneme_confidence,
+                "phoneme_pass_ratio": phoneme_pass_ratio,
+                "phoneme_ratio_threshold": self.min_phoneme_ratio,
+                "low_confidence_phoneme_ratio": low_confidence_phoneme_ratio,
+            }
+        )
+        if comparison_mode:
+            payload["comparison"] = self._comparison_payload(
+                naive_result=result,
+                governed_verdict=result.verdict.value,
+                governed_classification=result.classification.value,
+                reason="Acoustic confidence allowed automated policy evaluation.",
+            )
+        return payload
+
+    @staticmethod
+    def _comparison_payload(
+        *,
+        naive_result: EvalResult,
+        governed_verdict: str,
+        governed_classification: str,
+        reason: str,
+    ) -> dict[str, object]:
+        return {
+            "naive_evaluator": {
+                "verdict": naive_result.verdict.value,
+                "classification": naive_result.classification.value,
+            },
+            "paga_eval": {
+                "verdict": governed_verdict,
+                "classification": governed_classification,
+            },
+            "reason": reason,
         }
 
     # Delegate other useful methods to the core metric

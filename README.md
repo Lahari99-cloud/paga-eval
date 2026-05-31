@@ -275,7 +275,7 @@ from paga import EnterprisePhonemeEvaluator
 evaluator = EnterprisePhonemeEvaluator(
     min_acoustic_confidence=0.72,      # Overall signal quality threshold
     min_phoneme_confidence=0.5,        # Individual phoneme reliability
-    min_phoneme_ratio=0.8,             # Consistency requirement
+    min_phoneme_ratio=0.7,             # At most 30% low-confidence phonemes
     on_acoustic_bypass=log_bypass_event # Optional observability hook
 )
 
@@ -296,8 +296,29 @@ if result["verdict"] == "ESCALATE_REVIEW":
 This prevents the "Acoustic Confidence Trap" where ASR hallucinations during
 silence or noise could produce flawed evaluations and contaminated audit trails.
 
-See `tests/test_phoneme_engine.py` for comprehensive test coverage of the
-acoustic gating functionality.
+The hosted `POST /v1/evaluations` endpoint accepts the same
+`acoustic_confidence_scores`. When confidence falls below its configured mean
+threshold, or more than 30% of phoneme scores fall below the per-phoneme
+threshold, it bypasses automated judgment and returns `ESCALATE_REVIEW`.
+The encrypted audit record stores an `acoustic_bypass` event and a structured
+human-review queue object while continuing to omit transcript text. Set
+`comparison_mode` to `true` to show the naive transcript-only verdict beside the
+governed result:
+
+```json
+{
+  "target": "rabbit",
+  "attempt": "wabbit",
+  "action": "correct",
+  "acoustic_confidence_scores": [0.51, 0.49, 0.52],
+  "comparison_mode": true
+}
+```
+
+This exposes why governance matters: the naive evaluator returns
+`FAIL_OVER_INTERVENTION`, while `paga-eval` routes the uncertain audio to
+`ESCALATE_REVIEW`. See `tests/test_phoneme_engine.py` and `tests/test_api.py`
+for adversarial coverage.
 
 ## Hosted Service
 
@@ -322,10 +343,11 @@ docker compose up --build
 The hosted API includes:
 
 - `GET /healthz` and `GET /readyz`
-- authenticated `POST /v1/evaluations`
+- authenticated `POST /v1/evaluations` with ASR-confidence-aware routing
 - authenticated cohort reporting at `POST /v1/reports`
 - encrypted learner-profile update, lookup, and deletion endpoints
-- authenticated retention pruning and operational-count endpoints
+- authenticated retention pruning and operational counts, including acoustic
+  bypass and review-required audits
 - transcript omission from evaluator audit records by default
 
 All `/v1` routes require `X-API-Key`. The simple `PAGA_API_KEY` mode grants all

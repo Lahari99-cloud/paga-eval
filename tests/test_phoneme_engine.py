@@ -266,7 +266,7 @@ def test_acoustic_gate_low_mean_confidence_causes_escalate_review():
     )
 
     assert result["verdict"] == "ESCALATE_REVIEW"
-    assert result["classification"] == "UNCERTAIN_REQUIRES_REVIEW"
+    assert result["classification"] == "uncertain_requires_review"
     assert "acoustic validation failed" in result["reason"].lower()
     assert result["audit_record"]["action_taken"] == "BYPASS_METRIC"
     assert "mean_confidence=" in result["reason"]
@@ -309,7 +309,7 @@ def test_acoustic_gate_low_phoneme_ratio_causes_escalate_review():
     )
 
     assert result["verdict"] == "ESCALATE_REVIEW"
-    assert result["classification"] == "UNCERTAIN_REQUIRES_REVIEW"
+    assert result["classification"] == "uncertain_requires_review"
     assert "phoneme_ratio=" in result["reason"].lower()
     assert result["audit_record"]["action_taken"] == "BYPASS_METRIC"
     assert result["phoneme_pass_ratio"] == 0.5
@@ -362,3 +362,36 @@ def test_acoustic_gate_invocates_callback():
     assert event["verdict"] == "ESCALATE_REVIEW"
     assert event["audit_record"]["action_taken"] == "BYPASS_METRIC"
     assert event["phoneme_pass_ratio"] == 0.0  # 0/2 phonemes above 0.5 threshold
+
+
+def test_acoustic_gate_comparison_mode_explains_governance_override():
+    from paga import EnterprisePhonemeEvaluator
+
+    evaluator = EnterprisePhonemeEvaluator()
+    result = evaluator.evaluate_live_turn(
+        target="rabbit",
+        attempt="wabbit",
+        agent_action="correct",
+        acoustic_confidence_scores=[0.51, 0.49, 0.52],
+        comparison_mode=True,
+    )
+
+    assert result["comparison"]["naive_evaluator"]["verdict"] == "FAIL_OVER_INTERVENTION"
+    assert result["comparison"]["paga_eval"]["verdict"] == "ESCALATE_REVIEW"
+    assert result["comparison"]["reason"] == "Low ASR confidence prevented automated judgment."
+    assert result["review_queue"]["review_reason"] == "acoustic_uncertainty"
+    assert result["audit_record"]["event_type"] == "acoustic_bypass"
+    assert result["audit_record"]["target"] == ""
+    assert result["audit_record"]["attempt"] == ""
+
+
+def test_acoustic_gate_rejects_out_of_range_scores():
+    from paga import EnterprisePhonemeEvaluator
+
+    with pytest.raises(ValueError, match="between 0.0 and 1.0"):
+        EnterprisePhonemeEvaluator().evaluate_live_turn(
+            target="rabbit",
+            attempt="wabbit",
+            agent_action="accept",
+            acoustic_confidence_scores=[1.01],
+        )
