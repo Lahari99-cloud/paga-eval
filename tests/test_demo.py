@@ -134,3 +134,4 @@ def test_readme_puts_demo_launch_near_the_top():
     assert "http://127.0.0.1:8000/demo" in readme[
         demo_heading:install_heading
     ]
+    assert "docs/ELLO_VP_BRIEF.md" in readme

@@ -17,6 +17,9 @@ This repository is a working reference service for product, engineering, and
 responsible-AI review. It is not a clinical diagnostic tool or a completed
 institutional deployment.
 
+For an Ello-oriented product and engineering review, read
+[`docs/ELLO_VP_BRIEF.md`](docs/ELLO_VP_BRIEF.md).
+
 ## Executive Snapshot
 
 | Leadership question | What this reference service demonstrates |
