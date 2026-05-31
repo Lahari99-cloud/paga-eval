@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>paga-eval showcase</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, Arial, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #071a2f; color: white; overflow: hidden; }
+    .scene { display: none; width: 100vw; height: 100vh; padding: 64px 78px; background: radial-gradient(circle at 85% 10%, #1c6072, #071a2f 58%); }
+    .scene.active { display: grid; }
+    .title { align-content: center; }
+    .eyebrow { color: #82e8c8; font-size: 24px; font-weight: 800; letter-spacing: 4px; }
+    h1 { max-width: 1100px; margin: 22px 0; font-size: 82px; line-height: 1.02; }
+    h2 { margin: 0 0 18px; font-size: 50px; }
+    p { max-width: 1040px; color: #c2dae7; font-size: 30px; line-height: 1.4; }
+    .badge { width: max-content; margin-top: 24px; padding: 14px 20px; border: 1px solid #82e8c8; border-radius: 999px; color: #82e8c8; font-weight: 800; font-size: 20px; }
+    .visual { grid-template-rows: auto minmax(0, 1fr); gap: 22px; background: #edf4f7; color: #11334d; }
+    .visual p { margin: 0; color: #527083; font-size: 23px; }
+    .frame { min-width: 0; min-height: 0; display: grid; place-items: center; overflow: hidden; }
+    .frame img { display: block; min-width: 0; min-height: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 14px; box-shadow: 0 18px 46px rgba(0,0,0,.18); }
+    .screenshot { background: linear-gradient(135deg, #09243c, #123f5d); }
+    .screenshot .frame img { width: 94%; height: 84%; object-fit: contain; border: 1px solid rgba(255,255,255,.3); }
+    .screenshot h2 { margin-bottom: 10px; }
+    .screenshot p { color: #c2dae7; }
+    .footer { position: fixed; right: 30px; bottom: 22px; color: rgba(255,255,255,.6); font-size: 16px; letter-spacing: 2px; }
+  </style>
+</head>
+<body>
+  <section class="scene title active">
+    <div>
+      <div class="eyebrow">PAGA-EVAL</div>
+      <h1>Developmentally-aware evaluation guardrails for child-reading tutor agents</h1>
+      <p>Explainable tutor-agent decisions, privacy-safe audits, and human oversight for uncertain cases.</p>
+      <div class="badge">Working institutional reference service</div>
+    </div>
+  </section>
+  <section class="scene visual">
+    <div><h2>Governed from input to audit trail</h2><p>One reviewable flow for product, engineering, and responsible-AI teams.</p></div>
+    <div class="frame"><img src="assets/architecture.svg" alt="Institutional reference architecture"></div>
+  </section>
+  <section class="scene visual">
+    <div><h2>Leadership proof points</h2><p>What an institution can inspect before integrating a tutor agent.</p></div>
+    <div class="frame"><img src="assets/executive-dashboard.svg" alt="Executive proof-point dashboard"></div>
+  </section>
+  <section class="scene screenshot">
+    <div><h2>Catch over-intervention</h2><p>The evaluator flags unnecessary correction of a developmental speech pattern.</p></div>
+    <div class="frame"><img src="assets/screenshots/02-over-intervention.png" alt="Over-intervention verdict in the live console"></div>
+  </section>
+  <section class="scene screenshot">
+    <div><h2>Keep uncertainty supervised</h2><p>Ambiguous near-matches route to explicit human review.</p></div>
+    <div class="frame"><img src="assets/screenshots/03-human-review.png" alt="Human review escalation in the live console"></div>
+  </section>
+  <section class="scene screenshot">
+    <div><h2>Practice privacy by default</h2><p>Transcript text is omitted from durable audits while operations remain observable.</p></div>
+    <div class="frame"><img src="assets/screenshots/04-privacy-operations.png" alt="Privacy-safe audit and operations controls"></div>
+  </section>
+  <section class="scene title">
+    <div>
+      <div class="eyebrow">TRY THE INTERACTIVE DEMO</div>
+      <h1>Inspect the decisions. Review the policy. Keep humans in the loop.</h1>
+      <p>lahari99-cloud.github.io/paga-eval/examples/institution_demo.html</p>
+      <div class="badge">Reference service | Not a clinical diagnostic tool</div>
+    </div>
+  </section>
+  <div class="footer">PAGA-EVAL SHOWCASE</div>
+  <script>
+    window.showScene = index => {
+      document.querySelectorAll(".scene").forEach((scene, sceneIndex) => {
+        scene.classList.toggle("active", sceneIndex === index);
+      });
+    };
+  </script>
+</body>
+</html>
