@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">paga-eval institutional reference architecture</title>
+  <desc id="desc">A child reading attempt enters an authenticated evaluation API, passes through policy and acoustic quality gates, and produces explainable decisions, human review escalation, privacy-safe audits, and encrypted learner profiles.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#071a2f"/>
+      <stop offset="100%" stop-color="#123f5d"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#45c4b0"/>
+      <stop offset="100%" stop-color="#82e8c8"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#82e8c8"/>
+    </marker>
+    <style>
+      .eyebrow { fill:#82e8c8; font:700 24px Arial, sans-serif; letter-spacing:3px; }
+      .headline { fill:#ffffff; font:700 52px Arial, sans-serif; }
+      .subhead { fill:#b7d7e8; font:400 24px Arial, sans-serif; }
+      .card { fill:#ffffff; fill-opacity:0.08; stroke:#ffffff; stroke-opacity:0.22; stroke-width:2; rx:22; }
+      .card-accent { fill:url(#accent); fill-opacity:0.14; stroke:#82e8c8; stroke-width:2; rx:22; }
+      .title { fill:#ffffff; font:700 27px Arial, sans-serif; }
+      .body { fill:#c7deea; font:400 19px Arial, sans-serif; }
+      .number { fill:#071a2f; font:700 22px Arial, sans-serif; }
+      .pill { fill:#82e8c8; }
+      .flow { fill:none; stroke:#82e8c8; stroke-width:4; marker-end:url(#arrow); }
+      .footer { fill:#9ec4d4; font:400 18px Arial, sans-serif; }
+    </style>
+  </defs>
+  <rect width="1600" height="900" fill="url(#background)"/>
+  <text x="92" y="92" class="eyebrow">INSTITUTIONAL REFERENCE ARCHITECTURE</text>
+  <text x="92" y="158" class="headline">From reading attempt to governed AI decision</text>
+  <text x="92" y="204" class="subhead">Explainable evaluation, privacy by default, and human oversight for uncertain cases</text>
+
+  <rect x="90" y="304" width="240" height="215" class="card"/>
+  <circle cx="138" cy="350" r="22" class="pill"/>
+  <text x="131" y="358" class="number">1</text>
+  <text x="122" y="409" class="title">Tutor event</text>
+  <text x="122" y="450" class="body">Target word</text>
+  <text x="122" y="480" class="body">Child attempt</text>
+  <text x="122" y="510" class="body">Tutor action</text>
+
+  <rect x="395" y="304" width="250" height="215" class="card"/>
+  <circle cx="443" cy="350" r="22" class="pill"/>
+  <text x="436" y="358" class="number">2</text>
+  <text x="427" y="409" class="title">Hosted API</text>
+  <text x="427" y="450" class="body">API-key authentication</text>
+  <text x="427" y="480" class="body">Tenant boundary</text>
+  <text x="427" y="510" class="body">Request validation</text>
+
+  <rect x="710" y="304" width="300" height="215" class="card-accent"/>
+  <circle cx="758" cy="350" r="22" class="pill"/>
+  <text x="751" y="358" class="number">3</text>
+  <text x="742" y="409" class="title">Evaluation gates</text>
+  <text x="742" y="450" class="body">Acoustic confidence gate</text>
+  <text x="742" y="480" class="body">Versioned policy pack</text>
+  <text x="742" y="510" class="body">Developmental rules</text>
+
+  <rect x="1075" y="304" width="425" height="215" class="card"/>
+  <circle cx="1123" cy="350" r="22" class="pill"/>
+  <text x="1116" y="358" class="number">4</text>
+  <text x="1107" y="409" class="title">Explainable outcome</text>
+  <text x="1107" y="450" class="body">Pass, fail, or human-review escalation</text>
+  <text x="1107" y="480" class="body">Reason, policy version, and applied rules</text>
+  <text x="1107" y="510" class="body">No silent acceptance of ambiguous cases</text>
+
+  <path d="M330 412 H382" class="flow"/>
+  <path d="M645 412 H697" class="flow"/>
+  <path d="M1010 412 H1062" class="flow"/>
+
+  <rect x="395" y="626" width="390" height="150" class="card"/>
+  <text x="427" y="681" class="title">Privacy-safe audit trail</text>
+  <text x="427" y="723" class="body">Transcript text omitted by default</text>
+  <text x="427" y="753" class="body">Durable policy and verdict records</text>
+
+  <rect x="850" y="626" width="390" height="150" class="card"/>
+  <text x="882" y="681" class="title">Encrypted learner profiles</text>
+  <text x="882" y="723" class="body">Pseudonymized learner identifiers</text>
+  <text x="882" y="753" class="body">Deletion and retention workflows</text>
+
+  <path d="M860 519 V585 H590 V613" class="flow"/>
+  <path d="M860 519 V585 H1045 V613" class="flow"/>
+  <text x="92" y="850" class="footer">Working reference service | Institution-approved rules remain a production governance responsibility</text>
+</svg>

@@ -1,12 +1,31 @@
 """Real-service institution demo tests."""
 
+import importlib.util
+import os
 import sqlite3
+import subprocess
+import sys
+import time
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from examples.institution_demo_app import create_demo_app
 from paga.api import ServiceSettings
 from paga.storage import EncryptedProfileStore
+
+
+def _load_demo_app_factory():
+    """Load the local demo wrapper without relying on the generic `examples` namespace."""
+
+    path = Path(__file__).parents[1] / "examples" / "institution_demo_app.py"
+    spec = importlib.util.spec_from_file_location("paga_institution_demo_app", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.create_demo_app
+
+
+create_demo_app = _load_demo_app_factory()
 
 
 def _settings(tmp_path):
@@ -35,6 +54,7 @@ def test_demo_console_is_same_origin_wrapper_around_real_service(tmp_path):
     assert "AbortSignal.timeout" in page.text
     assert "withPending" in page.text
     assert 'id="mode-banner"' in page.text
+    assert "Connected to the local reference service." in page.text
     assert "evaluateOffline" in page.text
     assert "activateOfflineMode" in page.text
     assert 'data-requires-api="true"' in page.text
@@ -76,17 +96,14 @@ def test_demo_profile_storage_is_encrypted_at_rest(tmp_path):
     )
     assert response.status_code == 200
     with sqlite3.connect(settings.database_path) as connection:
-        encrypted = connection.execute("SELECT encrypted_profile FROM learner_profiles").fetchone()[0]
+        encrypted = connection.execute(
+            "SELECT encrypted_profile FROM learner_profiles"
+        ).fetchone()[0]
     assert b"student-demo-encryption-check" not in encrypted
     assert b"gliding_r_w" not in encrypted
 
 
 def test_documented_demo_launcher_imports_when_run_as_script():
-    import os
-    import subprocess
-    import sys
-    import time
-
     environment = {**os.environ, "PAGA_DEMO_PORT": "0"}
     process = subprocess.Popen(
         [
@@ -107,11 +124,13 @@ def test_documented_demo_launcher_imports_when_run_as_script():
 
 
 def test_readme_puts_demo_launch_near_the_top():
-    from pathlib import Path
-
     readme = Path("README.md").read_text(encoding="utf-8")
     demo_heading = readme.index("## Run The Demo")
     install_heading = readme.index("## Install")
     assert demo_heading < install_heading
-    assert "python examples/run_institution_demo.py" in readme[demo_heading:install_heading]
-    assert "http://127.0.0.1:8000/demo" in readme[demo_heading:install_heading]
+    assert "python examples/run_institution_demo.py" in readme[
+        demo_heading:install_heading
+    ]
+    assert "http://127.0.0.1:8000/demo" in readme[
+        demo_heading:install_heading
+    ]
