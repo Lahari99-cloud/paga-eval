@@ -35,6 +35,7 @@ def test_demo_console_is_same_origin_wrapper_around_real_service(tmp_path):
     assert "AbortSignal.timeout" in page.text
     assert "withPending" in page.text
     assert 'id="mode-banner"' in page.text
+    assert "Connected to the local reference service." in page.text
     assert "evaluateOffline" in page.text
     assert "activateOfflineMode" in page.text
     assert 'data-requires-api="true"' in page.text

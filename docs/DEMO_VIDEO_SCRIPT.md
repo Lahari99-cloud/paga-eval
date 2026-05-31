@@ -1,7 +1,8 @@
 # paga-eval: 90-Second Executive Demo
 
-Use this script for a short Loom, YouTube, or LinkedIn walkthrough. Keep the
-browser focused on the institution demo console and record at 1080p if possible.
+Use this script for a short narrated Loom, YouTube, or LinkedIn walkthrough.
+The repository also includes a reproducible browser-built showcase with live
+console screenshots, an architecture diagram, and an executive dashboard.
 
 ## Before Recording
 
@@ -14,14 +15,21 @@ python examples/run_institution_demo.py
 Confirm that the console loads and the API status is healthy. Keep the browser
 zoom large enough for the verdict cards to be readable.
 
-For a reproducible browser-only walkthrough asset, run:
+For the reproducible browser-built showcase, run:
 
 ```bash
-node scripts/record_demo_video.mjs
+node scripts/build_showcase_assets.mjs
 ```
 
-This writes `docs/assets/paga-eval-demo.webm`. Use the narration below when
-recording the final public Loom, YouTube, or LinkedIn version.
+This refreshes:
+
+- `docs/assets/paga-eval-showcase.webm`
+- `docs/assets/architecture.svg`
+- `docs/assets/executive-dashboard.svg`
+- `docs/assets/screenshots/*.png`
+
+Use the narration below when recording the final public Loom, YouTube, or
+LinkedIn version.
 
 ## Recording Script
 
@@ -37,11 +45,11 @@ recording the final public Loom, YouTube, or LinkedIn version.
 
 ## Publish Checklist
 
-1. Upload the recording to Loom, YouTube, or LinkedIn.
-2. Add the public narrated-video URL to `README.md`.
-3. Publish `examples/institution_demo.html` with GitHub Pages.
+1. Run `node scripts/build_showcase_assets.mjs`.
+2. Inspect the generated screenshots and showcase video.
+3. Upload a narrated recording to Loom, YouTube, or LinkedIn when needed.
 4. Confirm that the GitHub Pages URL in `README.md` opens the static demo.
-5. Open both links in a private browser window before sharing the repository.
+5. Open the video and demo links in a private browser window before sharing.
 
 ## Accuracy Note
 
