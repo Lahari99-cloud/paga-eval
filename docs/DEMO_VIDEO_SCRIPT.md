@@ -40,7 +40,7 @@ recording the final public Loom, YouTube, or LinkedIn version.
 1. Upload the recording to Loom, YouTube, or LinkedIn.
 2. Add the public narrated-video URL to `README.md`.
 3. Publish `examples/institution_demo.html` with GitHub Pages.
-4. Replace `ADD GITHUB PAGES URL` in `README.md`.
+4. Confirm that the GitHub Pages URL in `README.md` opens the static demo.
 5. Open both links in a private browser window before sharing the repository.
 
 ## Accuracy Note

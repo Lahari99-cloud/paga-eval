@@ -45,10 +45,11 @@ the repository:
 
 ### One-click static portfolio demo
 
-Publish [`examples/institution_demo.html`](examples/institution_demo.html) with
-GitHub Pages and add the public URL here:
+Open the GitHub Pages version of
+[`examples/institution_demo.html`](examples/institution_demo.html):
 
-> Interactive demo: **ADD GITHUB PAGES URL**
+> Interactive demo:
+> [`https://lahari99-cloud.github.io/paga-eval/examples/institution_demo.html`](https://lahari99-cloud.github.io/paga-eval/examples/institution_demo.html)
 
 When no API is reachable, the page clearly switches to static portfolio mode.
 The four evaluator scenarios continue to work in-browser. Authentication,
