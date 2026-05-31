@@ -154,7 +154,7 @@
       $("evaluation-result").appendChild(details); renderJson("audit-result",audit);
     }
     async function refresh() {
-      try { const [health,stats]=await Promise.all([api("/healthz"),api("/v1/operations/stats")]); $("service-status").textContent=health.status; $("audit-count").textContent=stats.stored_audits; $("profile-count").textContent=stats.stored_profiles; }
+      try { const [health,stats]=await Promise.all([api("/healthz"),api("/v1/operations/stats")]); $("service-status").textContent=health.status; $("audit-count").textContent=stats.stored_audits; $("profile-count").textContent=stats.stored_profiles; $("mode-banner").textContent="Connected to the local reference service. Hosted authentication, encrypted persistence, and operations are active."; }
       catch(error){ activateOfflineMode(); $("status").textContent="Local API unavailable. Static evaluation mode is active."; }
     }
     async function withPending(button, task) {
