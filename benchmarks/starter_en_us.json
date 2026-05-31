@@ -1,0 +1,42 @@
+[
+  {
+    "case_id": "clean-accepted",
+    "cohort": "starter-clean",
+    "target": "rabbit",
+    "attempt": "rabbit",
+    "action": "accept",
+    "expected_verdict": "PASS"
+  },
+  {
+    "case_id": "gliding-accepted",
+    "cohort": "starter-developmental-pattern",
+    "target": "rabbit",
+    "attempt": "wabbit",
+    "action": "accept",
+    "expected_verdict": "PASS"
+  },
+  {
+    "case_id": "gliding-corrected",
+    "cohort": "starter-developmental-pattern",
+    "target": "rabbit",
+    "attempt": "wabbit",
+    "action": "correct",
+    "expected_verdict": "FAIL_OVER_INTERVENTION"
+  },
+  {
+    "case_id": "near-match-review",
+    "cohort": "starter-human-review",
+    "target": "cat",
+    "attempt": "bat",
+    "action": "accept",
+    "expected_verdict": "ESCALATE_REVIEW"
+  },
+  {
+    "case_id": "decoding-error-corrected",
+    "cohort": "starter-decoding-error",
+    "target": "elephant",
+    "attempt": "table",
+    "action": "correct",
+    "expected_verdict": "PASS"
+  }
+]

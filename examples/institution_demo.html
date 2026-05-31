@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>paga-eval Institution Demo</title>
+  <style>
+    :root { color-scheme: light; --ink:#17233b; --muted:#64748b; --panel:#fff; --line:#dbe3ef; --navy:#0f2747; --blue:#1363df; --mint:#e9fbf4; --amber:#fff6dd; --rose:#fff0f1; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,Segoe UI,Arial,sans-serif; background:#f4f7fb; color:var(--ink); }
+    header { background:linear-gradient(125deg,#0b203c,#164e78); color:white; padding:28px 36px; }
+    header h1 { margin:0 0 5px; font-size:28px; }
+    header p { margin:0; color:#dbeafe; }
+    main { max-width:1180px; margin:24px auto; padding:0 18px 32px; }
+    .grid { display:grid; grid-template-columns:1.15fr .85fr; gap:18px; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; box-shadow:0 8px 24px #16345a12; }
+    h2 { margin:0 0 14px; font-size:18px; }
+    h3 { margin:18px 0 9px; font-size:14px; color:#355174; }
+    label { display:block; color:#52647d; font-size:12px; font-weight:700; margin:9px 0 5px; text-transform:uppercase; letter-spacing:.04em; }
+    input,select { width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; background:white; color:var(--ink); font-size:14px; }
+    button { cursor:pointer; border:0; border-radius:8px; padding:10px 13px; background:var(--blue); color:white; font-weight:700; }
+    button.secondary { background:#e8eef8; color:#24415f; }
+    .row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .presets { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px; }
+    .presets button { background:#eaf2ff; color:#1d4f91; font-size:12px; padding:7px 9px; }
+    .result { border-radius:12px; padding:15px; min-height:155px; background:#f8fafc; border:1px solid var(--line); }
+    .badge { display:inline-block; border-radius:99px; padding:5px 9px; margin:0 5px 7px 0; font-size:12px; font-weight:800; }
+    .PASS { background:var(--mint); color:#0b714d; }.FAIL_OVER_INTERVENTION,.UNDER_INTERVENTION { background:var(--rose); color:#a22935; }.ESCALATE_REVIEW { background:var(--amber); color:#925d00; }
+    .kv { display:grid; grid-template-columns:145px 1fr; gap:6px; margin-top:7px; font-size:13px; }
+    .kv strong { color:#60728a; }
+    pre { white-space:pre-wrap; word-break:break-word; background:#0f2747; color:#dbeafe; border-radius:9px; padding:12px; max-height:250px; overflow:auto; font-size:12px; }
+    .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+    .metric { border:1px solid var(--line); border-radius:10px; padding:11px; }
+    .metric small { display:block; color:var(--muted); }.metric b { font-size:22px; }
+    .privacy { margin-top:16px; padding:12px; border-left:4px solid #0d9488; background:#ecfdf5; color:#155e55; font-size:13px; }
+    .mode-banner { margin-bottom:16px; padding:12px; border-radius:10px; background:#e8f5ff; color:#18537d; font-size:13px; }
+    .mode-banner.offline { background:#fff6dd; color:#815800; }
+    #status { color:var(--muted); font-size:12px; margin-top:8px; min-height:16px; }
+    @media(max-width:820px){ .grid{grid-template-columns:1fr}.row,.metrics{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>paga-eval Educator Console</h1>
+    <p>Auditable tutor evaluation for developmentally appropriate reading support</p>
+  </header>
+  <main>
+    <div id="mode-banner" class="mode-banner" role="status" aria-live="polite">Connecting to the local reference service...</div>
+    <div class="grid">
+      <section class="panel">
+        <h2>1. Evaluate a Tutor Decision</h2>
+        <div class="presets">
+          <button data-preset="supportive">Developmental pattern</button>
+          <button data-preset="overcorrect">Over-intervention</button>
+          <button data-preset="review">Human review</button>
+          <button data-preset="decode">Decoding error</button>
+        </div>
+        <div class="row">
+          <div><label for="target">Target word</label><input id="target" value="rabbit"></div>
+          <div><label for="attempt">Child attempt</label><input id="attempt" value="wabbit"></div>
+          <div><label for="action">Tutor action</label><select id="action"><option>accept</option><option>correct</option><option>hint</option><option>continue</option></select></div>
+        </div>
+        <div class="actions"><button id="evaluate">Run real evaluation</button></div>
+        <div id="status" role="status" aria-live="polite"></div>
+        <h3>Policy Result</h3>
+        <div id="evaluation-result" class="result" aria-live="polite">Choose a scenario and run the evaluator.</div>
+        <div class="privacy"><b>Privacy boundary:</b> durable audit records omit target and attempt text by default. The UI displays inputs for the live demonstration only.</div>
+      </section>
+      <aside class="panel">
+        <h2>2. Operations Snapshot</h2>
+        <div class="metrics">
+          <div class="metric"><small>Stored audits</small><b id="audit-count">-</b></div>
+          <div class="metric"><small>Profiles</small><b id="profile-count">-</b></div>
+          <div class="metric"><small>Service</small><b id="service-status">-</b></div>
+        </div>
+        <div class="actions"><button id="refresh" class="secondary" data-requires-api="true">Refresh operations</button></div>
+        <h3>API Authentication</h3>
+        <label for="api-key">Local demo API key</label>
+        <input id="api-key" type="password" value="local-demo-api-key-at-least-24">
+      </aside>
+      <section class="panel">
+        <h2>3. Privacy-Safe Learner Profile</h2>
+        <div class="row">
+          <div><label for="learner">Demo learner ID</label><input id="learner" value="student-demo-123"></div>
+          <div><label for="pattern">Observed pattern</label><select id="pattern"><option value="gliding_r_w">gliding r to w</option><option value="word_substitution">word substitution</option></select></div>
+          <div><label for="category">Category</label><select id="category"><option value="developmental_speech_pattern">developmental speech pattern</option><option value="decoding_error">decoding error</option></select></div>
+        </div>
+        <div class="actions"><button id="update-profile" data-requires-api="true">Record observation</button><button id="lookup-profile" class="secondary" data-requires-api="true">Lookup encrypted profile</button><button id="delete-profile" class="secondary" data-requires-api="true">Delete profile</button></div>
+        <h3>Profile Response</h3><pre id="profile-result" aria-live="polite">No learner-profile action yet.</pre>
+      </section>
+      <section class="panel">
+        <h2>4. Reviewable Audit Contract</h2>
+        <p style="font-size:13px;color:#64748b">The evaluator explains the verdict, policy version, applied rules, and whether a human must review the turn.</p>
+        <pre id="audit-result" aria-live="polite">Run an evaluation to inspect the privacy-safe audit record.</pre>
+      </section>
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const presets = {
+      supportive:["rabbit","wabbit","accept"],
+      overcorrect:["rabbit","wabbit","correct"],
+      review:["cat","bat","accept"],
+      decode:["rabbit","zebra","accept"]
+    };
+    let offlineMode=false;
+    let offlineAuditCount=0;
+    // Demo-only credential for the localhost console. Never deploy this value.
+    const headers = () => ({"Content-Type":"application/json","X-API-Key":$("api-key").value});
+    const renderJson = (id,value) => { $(id).textContent=JSON.stringify(value,null,2); };
+    async function api(path, options={}) {
+      let response;
+      try {
+        response=await fetch(path,{...options,headers:{...headers(),...(options.headers||{})},signal:AbortSignal.timeout(5000)});
+      } catch(error) {
+        throw new Error("Cannot reach the local API. Run: python examples/run_institution_demo.py, then open http://127.0.0.1:8000/demo");
+      }
+      const body=await response.json().catch(()=>({detail:"Non-JSON response"}));
+      if(!response.ok) throw new Error(body.detail||`HTTP ${response.status}`);
+      return body;
+    }
+    function evaluateOffline(target,attempt,action) {
+      const clean=value=>value.toLowerCase().trim().replace(/[^a-z]/g,"");
+      target=clean(target); attempt=clean(attempt); action=action.toLowerCase().trim();
+      let classification="decoding_error",verdict="UNDER_INTERVENTION",reason=`Likely decoding error ('${attempt}' vs '${target}') went unaddressed.`,rules=[];
+      if(target===attempt){classification="clean_reading";}
+      else if(target==="rabbit"&&attempt==="wabbit"){classification="developmental_speech_pattern";rules=["gliding-r-w"];}
+      else if(target==="cat"&&attempt==="bat"){classification="uncertain_requires_review";verdict="ESCALATE_REVIEW";reason=`Unexplained near-match ('${attempt}' vs '${target}') requires educator review.`;}
+      if(classification==="clean_reading"||classification==="developmental_speech_pattern"){
+        if(["correct","hint"].includes(action)){verdict="FAIL_OVER_INTERVENTION";reason=`Agent took '${action}' on a ${classification} ('${attempt}' for '${target}').`;}
+        else {verdict="PASS";reason=`Agent correctly let the child continue after '${attempt}'.`;}
+      }
+      offlineAuditCount+=1;
+      return {verdict,classification,review_required:verdict==="ESCALATE_REVIEW",reason,applied_rule_ids:rules,audit_record:{evaluation_id:`static-${offlineAuditCount}`,policy_id:"paga-default-en-us",policy_version:"1.0.0",target:"",attempt:"",review_required:verdict==="ESCALATE_REVIEW"}};
+    }
+    function activateOfflineMode() {
+      if(offlineMode)return;
+      offlineMode=true;
+      $("mode-banner").className="mode-banner offline";
+      $("mode-banner").textContent="Static portfolio mode: evaluator scenarios run in this browser. Authentication, encrypted persistence, profiles, deletion, and operations require the local reference service.";
+      $("service-status").textContent="static";
+      $("audit-count").textContent="local";
+      $("profile-count").textContent="n/a";
+      document.querySelectorAll('[data-requires-api="true"]').forEach(button=>button.disabled=true);
+    }
+    function renderEvaluation(body) {
+      const audit=body.audit_record||{};
+      $("evaluation-result").innerHTML="";
+      const badge=document.createElement("span"); badge.className=`badge ${body.verdict}`; badge.textContent=body.verdict; $("evaluation-result").appendChild(badge);
+      const category=document.createElement("span"); category.className="badge"; category.textContent=body.classification; $("evaluation-result").appendChild(category);
+      const details=document.createElement("div"); details.className="kv";
+      [["Reason",body.reason],["Human review",String(body.review_required)],["Policy",`${audit.policy_id} @ ${audit.policy_version}`],["Applied rules",(body.applied_rule_ids||[]).join(", ")||"none"],["Audit transcript",audit.target==null&&audit.attempt==null||audit.target===""&&audit.attempt===""?"omitted by default":"configured mode"]].forEach(([k,v])=>{const a=document.createElement("strong");a.textContent=k;const b=document.createElement("span");b.textContent=v;details.append(a,b);});
+      $("evaluation-result").appendChild(details); renderJson("audit-result",audit);
+    }
+    async function refresh() {
+      try { const [health,stats]=await Promise.all([api("/healthz"),api("/v1/operations/stats")]); $("service-status").textContent=health.status; $("audit-count").textContent=stats.stored_audits; $("profile-count").textContent=stats.stored_profiles; }
+      catch(error){ activateOfflineMode(); $("status").textContent="Local API unavailable. Static evaluation mode is active."; }
+    }
+    async function withPending(button, task) {
+      if(button.disabled) return;
+      button.disabled=true;
+      try { await task(); } finally { button.disabled=false; }
+    }
+    document.querySelectorAll("[data-preset]").forEach(button=>button.onclick=()=>{const [target,attempt,action]=presets[button.dataset.preset];$("target").value=target;$("attempt").value=attempt;$("action").value=action;});
+    $("evaluate").onclick=()=>withPending($("evaluate"),async()=>{try{$("status").textContent="";const body=offlineMode?evaluateOffline($("target").value,$("attempt").value,$("action").value):await api("/v1/evaluations",{method:"POST",body:JSON.stringify({target:$("target").value,attempt:$("attempt").value,action:$("action").value})});renderEvaluation(body);if(!offlineMode)await refresh();}catch(error){activateOfflineMode();renderEvaluation(evaluateOffline($("target").value,$("attempt").value,$("action").value));$("status").textContent="Local API unavailable. Showing static portfolio evaluation.";}});
+    $("update-profile").onclick=()=>withPending($("update-profile"),async()=>{try{renderJson("profile-result",await api("/v1/profiles",{method:"POST",body:JSON.stringify({user_id:$("learner").value,pattern:$("pattern").value,category:$("category").value})}));await refresh();}catch(error){renderJson("profile-result",{error:error.message});}});
+    $("lookup-profile").onclick=()=>withPending($("lookup-profile"),async()=>{try{renderJson("profile-result",await api("/v1/profiles/lookup",{method:"POST",body:JSON.stringify({user_id:$("learner").value})}));}catch(error){renderJson("profile-result",{error:error.message});}});
+    $("delete-profile").onclick=()=>withPending($("delete-profile"),async()=>{if(!confirm("Delete this privacy-safe learner profile?"))return;try{renderJson("profile-result",await api("/v1/profiles/delete",{method:"POST",body:JSON.stringify({user_id:$("learner").value})}));await refresh();}catch(error){renderJson("profile-result",{error:error.message});}});
+    $("refresh").onclick=refresh; refresh();
+  </script>
+</body>
+</html>

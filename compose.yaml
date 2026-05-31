@@ -1,0 +1,26 @@
+services:
+  paga-eval:
+    build:
+      context: .
+      args:
+        BUILD_DATE: ${PAGA_BUILD_DATE:-unknown}
+        VCS_REF: ${PAGA_VCS_REF:-unknown}
+    image: paga-eval:0.4.0
+    environment:
+      PAGA_API_KEY: ${PAGA_API_KEY:-}
+      PAGA_API_KEYS_JSON: ${PAGA_API_KEYS_JSON:-}
+      PAGA_PROFILE_SALT: ${PAGA_PROFILE_SALT:?Set PAGA_PROFILE_SALT}
+      PAGA_ENCRYPTION_KEY: ${PAGA_ENCRYPTION_KEY:?Set PAGA_ENCRYPTION_KEY}
+      PAGA_DECRYPTION_KEYS: ${PAGA_DECRYPTION_KEYS:-}
+      PAGA_DATABASE_PATH: /data/paga_profiles.sqlite3
+      PAGA_RETENTION_DAYS: ${PAGA_RETENTION_DAYS:-30}
+      PAGA_MAX_REQUEST_BYTES: ${PAGA_MAX_REQUEST_BYTES:-32768}
+      PAGA_LOG_REQUESTS: ${PAGA_LOG_REQUESTS:-true}
+    ports:
+      - "${PAGA_PORT:-8000}:8000"
+    volumes:
+      - paga-data:/data
+    restart: unless-stopped
+
+volumes:
+  paga-data:

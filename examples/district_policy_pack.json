@@ -1,0 +1,23 @@
+{
+  "policy_id": "district-example-en-us",
+  "version": "2026.1-draft",
+  "locale": "en-US",
+  "phonetic_tolerance": 0,
+  "decoding_error_threshold": 2,
+  "review_ambiguous_attempts": true,
+  "audit_text_mode": "omitted",
+  "rules": [
+    {
+      "rule_id": "gliding-r-w",
+      "source": "r",
+      "replacement": "w",
+      "process": "gliding",
+      "category": "developmental_speech_pattern",
+      "locale": "en-US",
+      "age_range": "replace-with-approved-age-band",
+      "rationale": "rabbit -> wabbit",
+      "intervention_guidance": "Do not correct automatically; follow educator or SLP policy.",
+      "evidence_reference": "Replace with institution-approved SLP review reference."
+    }
+  ]
+}

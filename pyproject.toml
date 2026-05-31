@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "paga-eval"
+version = "0.4.0"
+description = "Phoneme-aware grading for child-reading tutor agents: stop LLM judges from penalizing normal speech development."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "paga-eval contributors" }]
+keywords = ["llm-eval", "agents", "education", "speech", "langgraph", "langfuse"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "levenshtein>=0.25",
+]
+
+[project.optional-dependencies]
+# Agent + tracing stack kept optional so the core grader installs in seconds and
+# stays dependency-light. Pull these in for the LangGraph/Langfuse examples.
+integrations = [
+    "langgraph",
+    "langfuse",
+]
+service = [
+    "cryptography>=42.0",
+    "fastapi>=0.110",
+    "pydantic>=2.0",
+    "uvicorn>=0.29",
+]
+dev = [
+    "pytest>=7.0",
+    "httpx>=0.27",
+]
+
+[tool.setuptools.packages.find]
+include = ["paga*"]

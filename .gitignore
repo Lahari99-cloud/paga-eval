@@ -1,0 +1,14 @@
+venv/
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+*.pyc
+.DS_Store
+build/
+dist/
+wheel-smoke/
+
+# Local working notes; keep these out of the public portfolio repository.
+CLAUDE.md
+JOB_PITCH_SUMMARY.md
