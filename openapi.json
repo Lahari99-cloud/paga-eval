@@ -198,6 +198,13 @@
       },
       "ValidationError": {
         "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
           "loc": {
             "items": {
               "anyOf": [
@@ -245,6 +252,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "title": "Response Healthz Healthz Get",
                   "type": "object"
                 }
@@ -264,6 +272,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "title": "Response Readyz Readyz Get",
                   "type": "object"
                 }
@@ -311,6 +320,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "title": "Response Evaluate V1 Evaluations Post",
                   "type": "object"
                 }
@@ -358,6 +368,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "title": "Response Prune Profiles V1 Maintenance Prune Post",
                   "type": "object"
                 }
@@ -405,6 +416,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "title": "Response Operation Stats V1 Operations Stats Get",
                   "type": "object"
                 }
@@ -462,6 +474,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "title": "Response Update Profile V1 Profiles Post",
                   "type": "object"
                 }
@@ -519,6 +532,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "title": "Response Delete Profile V1 Profiles Delete Post",
                   "type": "object"
                 }
@@ -576,6 +590,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "title": "Response Get Profile V1 Profiles Lookup Post",
                   "type": "object"
                 }
@@ -633,6 +648,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "title": "Response Report V1 Reports Post",
                   "type": "object"
                 }

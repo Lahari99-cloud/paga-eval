@@ -31,24 +31,33 @@ The bundled policy is deliberately narrow. Institutions should validate and
 approve policy packs with educators and speech-language pathologists before
 production use.
 
+## Visual Showcase
+
+Watch the composed executive walkthrough:
+
+> [`paga-eval` showcase video](docs/assets/paga-eval-showcase.webm)
+
+### Reference architecture
+
+![paga-eval institutional reference architecture](docs/assets/architecture.svg)
+
+### Leadership dashboard
+
+![paga-eval executive proof-point dashboard](docs/assets/executive-dashboard.svg)
+
+### Live console proof
+
+![Over-intervention verdict in the educator console](docs/assets/screenshots/02-over-intervention.png)
+
 ## Run The Demo
-
-### Executive walkthrough
-
-Record or watch the 90-second walkthrough using
-[`docs/DEMO_VIDEO_SCRIPT.md`](docs/DEMO_VIDEO_SCRIPT.md). Before sharing this
-repository externally, upload the narrated version to Loom, YouTube, or LinkedIn
-and add that public URL here. A reproducible browser walkthrough is included in
-the repository:
-
-> Demo video: [`docs/assets/paga-eval-demo.webm`](docs/assets/paga-eval-demo.webm)
 
 ### One-click static portfolio demo
 
-Publish [`examples/institution_demo.html`](examples/institution_demo.html) with
-GitHub Pages and add the public URL here:
+Open the GitHub Pages version of
+[`examples/institution_demo.html`](examples/institution_demo.html):
 
-> Interactive demo: **ADD GITHUB PAGES URL**
+> Interactive demo:
+> [`https://lahari99-cloud.github.io/paga-eval/examples/institution_demo.html`](https://lahari99-cloud.github.io/paga-eval/examples/institution_demo.html)
 
 When no API is reachable, the page clearly switches to static portfolio mode.
 The four evaluator scenarios continue to work in-browser. Authentication,
