@@ -1,12 +1,20 @@
 """Real-service institution demo tests."""
 
+import importlib.util
 import sqlite3
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from examples.institution_demo_app import create_demo_app
 from paga.api import ServiceSettings
 from paga.storage import EncryptedProfileStore
+
+_DEMO_APP_PATH = Path(__file__).parents[1] / "examples" / "institution_demo_app.py"
+_DEMO_APP_SPEC = importlib.util.spec_from_file_location("paga_institution_demo_app", _DEMO_APP_PATH)
+assert _DEMO_APP_SPEC is not None and _DEMO_APP_SPEC.loader is not None
+_DEMO_APP_MODULE = importlib.util.module_from_spec(_DEMO_APP_SPEC)
+_DEMO_APP_SPEC.loader.exec_module(_DEMO_APP_MODULE)
+create_demo_app = _DEMO_APP_MODULE.create_demo_app
 
 
 def _settings(tmp_path):
